@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vetty Notes Workflow</title>
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --primary-blue-hover: #1d4ed8;
+            --border-color: #e5e7eb;
+            --text-main: #374151;
+            --text-light: #6b7280;
+            --bg-light: #f9fafb;
+            --success-green: #86efac;
+            --danger-red: #ef4444;
+            --disabled-gray: #e5e7eb;
+            --disabled-text: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f3f4f6;
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Sidebar Styles --- */
+        .sidebar {
+            width: 350px;
+            background: white;
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .notes-textarea {
+            width: 100%;
+            height: 120px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+
+        .btn-outline {
+            background: white;
+            border: 1px solid #cbd5e1;
+            color: var(--text-main);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            float: right;
+            transition: all 0.2s;
+        }
+
+        .btn-outline:hover:not(:disabled) { background: var(--bg-light); }
+
+        .btn-outline:disabled {
+            background: var(--disabled-gray);
+            color: var(--disabled-text);
+            border-color: var(--disabled-gray);
+            cursor: not-allowed;
+        }
+
+        .info-table {
+            width: 100%;
+            margin-top: 50px;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .info-table td {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* --- Modal Styles --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            width: 650px;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header { padding: 16px; }
+
+        .search-input {
+            width: 100%;
+            background: #e5e7eb;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .modal-body {
+            display: flex;
+            padding: 0 16px;
+            height: 250px;
+        }
+
+        .user-list-container {
+            flex: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .user-item.selected { background: #eff6ff; }
+
+        .check-icon {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            border: 2px solid #cbd5e1;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-item.selected .check-icon {
+            background: var(--success-green);
+            border-color: var(--success-green);
+        }
+
+        .user-item.selected .check-icon::after { content: '✓'; color: white; font-size: 12px; }
+
+        .selected-users-pane { width: 200px; padding-left: 16px; }
+
+        .user-pill {
+            display: inline-flex;
+            align-items: center;
+            background: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .pill-remove { margin-left: 8px; cursor: pointer; color: #64748b; }
+
+        .modal-footer {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .email-config-hidden { display: none; }
+
+        .subject-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        /* --- Tag Manager Styles --- */
+        .tags-dropdown-container { position: relative; }
+
+        .tags-toggle-btn {
+            background: white;
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            min-width: 120px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tags-menu {
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            margin-bottom: 8px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            width: 220px;
+            display: none;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        .tags-menu.active { display: block; }
+
+        .tags-list-scroll {
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .tag-option {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            transition: background 0.2s;
+        }
+
+        .tag-option:hover { background: var(--bg-light); }
+
+        .tag-label-text { flex: 1; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+
+        .tag-delete-btn {
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .tag-delete-btn:hover {
+            color: var(--danger-red);
+            background: #fee2e2;
+        }
+
+        .add-tag-form {
+            padding: 10px;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-light);
+            display: flex;
+            gap: 6px;
+        }
+
+        .add-tag-input {
+            flex: 1;
+            padding: 4px 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .btn-add-tag {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            width: 24px; height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .actions-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* --- Email Preview --- */
+        .email-preview-container {
+            flex: 1;
+            padding: 20px;
+            background: #f1f3f4;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .email-card {
+            background: white;
+            width: 100%;
+            max-width: 800px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .email-header-meta { padding: 16px 24px; border-bottom: 1px solid var(--border-color); }
+        .email-subject { font-size: 18px; margin-bottom: 8px; }
+        .email-body { padding: 40px; }
+        .vetty-logo { font-size: 32px; font-weight: bold; margin-bottom: 30px; display: flex; align-items: center; justify-content: flex-start; }
+        .vetty-logo span { color: #60a5fa; margin-right: -2px; }
+    </style>
+</head>
+<body>
+
+    <!-- SCREEN 1: Sidebar -->
+    <div class="sidebar" id="main-sidebar">
+        <div class="section-title">CLIENT VP NOTES</div>
+        <textarea id="vp-notes" class="notes-textarea" placeholder="Notes will also appear on the Activity feed"></textarea>
+        <button id="open-send-modal" class="btn-outline" disabled>Send To</button>
+
+        <table class="info-table">
+            <tr><td>Name</td><td style="color: black; font-weight: 500;">Donald Duck</td></tr>
+            <tr><td>SSN</td><td style="color: black;">XXX-XX-6654</td></tr>
+            <tr><td>DOB</td><td style="color: black;">02/02/2002</td></tr>
+            <tr><td>Address</td><td style="color: black;">any street, Killeen, TX, 76543</td></tr>
+        </table>
+    </div>
+
+    <!-- SCREEN 2: Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <input type="text" class="search-input" placeholder="Search User">
+            </div>
+            <div class="modal-body">
+                <div class="user-list-container" id="user-list"></div>
+                <div class="selected-users-pane" id="selected-pills-container"></div>
+            </div>
+            <div class="modal-footer">
+                <div class="options-grid">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="send-email-cb">
+                        Send an email also to the selected user(s)
+                    </label>
+                    
+                    <div class="tags-dropdown-container email-config-hidden" id="tags-config-container">
+                        <button class="tags-toggle-btn" id="tags-toggle-btn">
+                            <span id="current-tag-label">No Tag</span>
+                            <span>▼</span>
+                        </button>
+                        <div class="tags-menu" id="tags-menu">
+                            <div class="tags-list-scroll" id="tags-list-render"></div>
+                            <div class="add-tag-form">
+                                <input type="text" id="new-tag-input" class="add-tag-input" placeholder="New tag name...">
+                                <button class="btn-add-tag" id="btn-add-tag">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="email-config-hidden" id="subject-config-container">
+                    <input type="text" id="custom-subject" class="subject-input" placeholder="Custom Subject Line (Optional)">
+                </div>
+
+                <div class="actions-row">
+                    <button class="btn-text" style="background:none; border:none; cursor:pointer;" id="close-modal-btn">Close</button>
+                    <button class="btn-primary" id="send-final-btn">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 3: Email Preview -->
+    <div class="email-preview-container" id="email-preview-area">
+        <h2 style="margin-bottom: 20px; color: #5f6368;">Generated Emails</h2>
+        <div id="emails-wrapper" style="width: 100%;"></div>
+        <button class="btn-primary" onclick="location.reload()">Reset Demo</button>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const availableUsers = [
+            { id: 1, name: 'Deb Roy', email: 'debendu.roy+testvp@vetty.co' },
+            { id: 2, name: 'Debendu Roy', email: 'debendu.roy@vetty.co' }
+        ];
+
+        let tags = [
+            { id: 't1', label: 'Action Needed', value: 'ACTION NEEDED' },
+            { id: 't2', label: 'FYI', value: 'FYI' }
+        ];
+
+        // --- State ---
+        let selectedUserIds = new Set();
+        let selectedTagValue = '';
+        let isEmailChecked = false;
+
+        // --- DOM ---
+        const vpNotesInput = document.getElementById('vp-notes');
+        const openSendModalBtn = document.getElementById('open-send-modal');
+        const userListEl = document.getElementById('user-list');
+        const pillsContainerEl = document.getElementById('selected-pills-container');
+        const tagsMenu = document.getElementById('tags-menu');
+        const tagsListRender = document.getElementById('tags-list-render');
+        const emailCheckbox = document.getElementById('send-email-cb');
+        const tagsConfigContainer = document.getElementById('tags-config-container');
+        const subjectConfigContainer = document.getElementById('subject-config-container');
+
+        // --- Core Functions ---
+        function init() {
+            renderUserList();
+            renderTags();
+            
+            vpNotesInput.addEventListener('input', (e) => {
+                const hasValue = e.target.value.trim().length > 0;
+                openSendModalBtn.disabled = !hasValue;
+            });
+
+            emailCheckbox.addEventListener('change', (e) => {
+                isEmailChecked = e.target.checked;
+                tagsConfigContainer.style.display = isEmailChecked ? 'block' : 'none';
+                subjectConfigContainer.style.display = isEmailChecked ? 'block' : 'none';
+            });
+
+            openSendModalBtn.onclick = () => document.getElementById('modal-overlay').style.display = 'flex';
+            document.getElementById('close-modal-btn').onclick = () => document.getElementById('modal-overlay').style.display = 'none';
+            document.getElementById('tags-toggle-btn').onclick = () => tagsMenu.classList.toggle('active');
+            
+            document.getElementById('btn-add-tag').onclick = addNewTag;
+            document.getElementById('send-final-btn').onclick = handleSend;
+
+            document.addEventListener('click', (e) => {
+                if (!document.getElementById('tags-config-container').contains(e.target)) {
+                    tagsMenu.classList.remove('active');
+                }
+            });
+        }
+
+        function renderUserList() {
+            userListEl.innerHTML = '';
+            availableUsers.forEach(user => {
+                const item = document.createElement('div');
+                item.className = `user-item ${selectedUserIds.has(user.id) ? 'selected' : ''}`;
+                item.innerHTML = `<div class="check-icon"></div><span class="user-name">${user.name}</span>`;
+                item.onclick = () => {
+                    if (selectedUserIds.has(user.id)) selectedUserIds.delete(user.id);
+                    else selectedUserIds.add(user.id);
+                    renderUserList();
+                    renderPills();
+                };
+                userListEl.appendChild(item);
+            });
+        }
+
+        function renderPills() {
+            pillsContainerEl.innerHTML = '';
+            availableUsers.forEach(user => {
+                if (selectedUserIds.has(user.id)) {
+                    const pill = document.createElement('div');
+                    pill.className = 'user-pill';
+                    pill.innerHTML = `${user.name} <span class="pill-remove">x</span>`;
+                    pill.querySelector('.pill-remove').onclick = () => {
+                        selectedUserIds.delete(user.id);
+                        renderUserList();
+                        renderPills();
+                    };
+                    pillsContainerEl.appendChild(pill);
+                }
+            });
+        }
+
+        function renderTags() {
+            tagsListRender.innerHTML = `
+                <label class="tag-option">
+                    <span class="tag-label-text">
+                        <input type="radio" name="email_tag" value="" ${selectedTagValue === '' ? 'checked' : ''}>
+                        No Tag
+                    </span>
+                </label>
+            `;
+
+            tags.forEach(tag => {
+                const row = document.createElement('div');
+                row.className = 'tag-option';
+                row.innerHTML = `
+                    <label class="tag-label-text">
+                        <input type="radio" name="email_tag" value="${tag.value}" ${selectedTagValue === tag.value ? 'checked' : ''}>
+                        ${tag.label}
+                    </label>
+                    <span class="tag-delete-btn" title="Delete Tag">🗑️</span>
+                `;
+
+                row.querySelector('input').addEventListener('change', (e) => {
+                    selectedTagValue = e.target.value;
+                    document.getElementById('current-tag-label').innerText = tag.label;
+                    tagsMenu.classList.remove('active');
+                });
+
+                row.querySelector('.tag-delete-btn').onclick = (e) => {
+                    e.stopPropagation();
+                    deleteTag(tag.id);
+                };
+
+                tagsListRender.appendChild(row);
+            });
+
+            tagsListRender.querySelector('input[value=""]').onchange = () => {
+                selectedTagValue = '';
+                document.getElementById('current-tag-label').innerText = 'No Tag';
+                tagsMenu.classList.remove('active');
+            };
+        }
+
+        function addNewTag() {
+            const input = document.getElementById('new-tag-input');
+            const val = input.value.trim();
+            if (val) {
+                tags.push({ id: Date.now().toString(), label: val, value: val.toUpperCase() });
+                input.value = '';
+                renderTags();
+            }
+        }
+
+        function deleteTag(id) {
+            const tagToDelete = tags.find(t => t.id === id);
+            if (tagToDelete && selectedTagValue === tagToDelete.value) {
+                selectedTagValue = '';
+                document.getElementById('current-tag-label').innerText = 'No Tag';
+            }
+            tags = tags.filter(t => t.id !== id);
+            renderTags();
+        }
+
+        function handleSend() {
+            if (selectedUserIds.size === 0) return alert("Select at least one user.");
+            
+            if (isEmailChecked) {
+                generatePreviews();
+                document.getElementById('main-sidebar').style.display = 'none';
+                document.getElementById('modal-overlay').style.display = 'none';
+                document.getElementById('email-preview-area').style.display = 'flex';
+            } else {
+                alert("Notes saved successfully.");
+                document.getElementById('modal-overlay').style.display = 'none';
+            }
+        }
+
+        function generatePreviews() {
+            const wrapper = document.getElementById('emails-wrapper');
+            const notes = vpNotesInput.value || "No notes provided.";
+            const customSub = document.getElementById('custom-subject').value.trim();
+            wrapper.innerHTML = '';
+
+            availableUsers.forEach(user => {
+                if (selectedUserIds.has(user.id)) {
+                    let subject = customSub || 'Note from Vetty Researcher regarding Donald Duck, TJETO';
+                    if (selectedTagValue) subject = `[${selectedTagValue}] ${subject}`;
+
+                    wrapper.innerHTML += `
+                        <div class="email-card">
+                            <div class="email-header-meta">
+                                <div class="email-subject"><strong>${subject}</strong></div>
+                                <div style="font-size:12px; color:#666">To: ${user.email}</div>
+                            </div>
+                            <div class="email-body" style="background: white; padding: 40px 60px;">
+                                <div class="vetty-logo"><span style="color: #60a5fa;">v</span>etty</div>
+                                
+                                <p style="margin-bottom: 25px; font-size: 15px; color: #5f6368; font-family: Arial, sans-serif;">Hi ${user.name},</p>
+                                
+                                <!-- Updated notes styling: Plain white background, proper black color, no bold -->
+                                <div style="white-space: pre-wrap; margin-bottom: 30px; color: #202124; font-size: 16px; line-height: 1.5; font-family: Arial, sans-serif;">${notes}</div>
+                                
+                                <p style="margin-bottom: 12px; font-size: 15px; color: #202124; font-family: Arial, sans-serif;">Log in here :</p>
+                                <p style="margin-bottom: 50px; font-size: 15px;"><a href="#" style="color:#1a73e8; text-decoration: underline;">https://client.vetty.co</a></p>
+                                
+                                <div style="margin-top:40px; font-size:14px; color:#5f6368; text-align: left; font-family: Arial, sans-serif;">
+                                    Questions? Drop us a line at <a href="mailto:support@vetty.co" style="color:#1a73e8; text-decoration: none;">support@vetty.co</a>.
+                                    <div style="font-weight:bold; font-size:16px; margin-top:25px; color: #202124; display: flex; align-items: center; justify-content: center;">
+                                        <span style="color: #60a5fa; margin-right: -2px;">v</span>etty
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
