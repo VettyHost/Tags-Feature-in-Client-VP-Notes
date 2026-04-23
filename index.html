@@ -31,16 +31,29 @@
             display: flex;
             height: 100vh;
             overflow: hidden;
+            justify-content: flex-end; /* Align main content/sidebar to the right */
         }
 
-        /* --- Sidebar Styles --- */
+        /* --- Main Content Placeholder (Left side) --- */
+        .main-content-placeholder {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-style: italic;
+            font-size: 14px;
+        }
+
+        /* --- Sidebar Styles (Now on the Right) --- */
         .sidebar {
             width: 350px;
             background: white;
-            border-right: 1px solid var(--border-color);
+            border-left: 1px solid var(--border-color); /* Changed from border-right */
             padding: 20px;
             height: 100%;
             overflow-y: auto;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.02);
         }
 
         .section-title {
@@ -341,7 +354,12 @@
 </head>
 <body>
 
-    <!-- SCREEN 1: Sidebar -->
+    <!-- Main Content Area (Left side) -->
+    <div class="main-content-placeholder" id="main-content">
+        Candidate Profile Content Area
+    </div>
+
+    <!-- SCREEN 1: Sidebar (Right side) -->
     <div class="sidebar" id="main-sidebar">
         <div class="section-title">CLIENT VP NOTES</div>
         <textarea id="vp-notes" class="notes-textarea" placeholder="Notes will also appear on the Activity feed"></textarea>
@@ -564,6 +582,7 @@
             
             if (isEmailChecked) {
                 generatePreviews();
+                document.getElementById('main-content').style.display = 'none';
                 document.getElementById('main-sidebar').style.display = 'none';
                 document.getElementById('modal-overlay').style.display = 'none';
                 document.getElementById('email-preview-area').style.display = 'flex';
@@ -595,7 +614,6 @@
                                 
                                 <p style="margin-bottom: 25px; font-size: 15px; color: #5f6368; font-family: Arial, sans-serif;">Hi ${user.name},</p>
                                 
-                                <!-- Updated notes styling: Plain white background, proper black color, no bold -->
                                 <div style="white-space: pre-wrap; margin-bottom: 30px; color: #202124; font-size: 16px; line-height: 1.5; font-family: Arial, sans-serif;">${notes}</div>
                                 
                                 <p style="margin-bottom: 12px; font-size: 15px; color: #202124; font-family: Arial, sans-serif;">Log in here :</p>
