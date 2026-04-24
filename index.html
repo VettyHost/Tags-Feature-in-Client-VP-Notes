@@ -3,529 +3,523 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vetty Researcher Dashboard</title>
+    <title>Vetty Researcher Workflow</title>
     <style>
         :root {
-            --primary-blue: #2563eb;
-            --primary-blue-hover: #1d4ed8;
-            --border-color: #e5e7eb;
-            --text-main: #374151;
-            --text-light: #6b7280;
-            --bg-light: #f9fafb;
-            --success-green: #22c55e;
-            --danger-red: #ef4444;
-            --disabled-gray: #e5e7eb;
-            --disabled-text: #9ca3af;
-            --table-header-bg: #f8fafc;
-            --btn-info: #06b6d4;
+            --vetty-blue: #1e88e5;
+            --vetty-blue-hover: #1565c0;
+            --border-color: #e0e0e0;
+            --text-main: #333333;
+            --text-light: #757575;
+            --bg-page: #f4f7f9;
+            --success-green: #4caf50;
+            --danger-red: #ef5350;
+            --header-blue: #3b82f6;
+            --search-bg: #ccd2d9;
+            --pill-bg: #e2e8f0;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
-        body { background-color: #f3f4f6; color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { background-color: var(--bg-page); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* --- Navigation Tabs --- */
-        .app-nav { background: white; padding: 10px 20px; display: flex; gap: 20px; border-bottom: 1px solid var(--border-color); }
-        .nav-btn { padding: 8px 16px; cursor: pointer; border: none; background: none; font-size: 14px; font-weight: 500; color: var(--text-light); transition: all 0.2s; }
-        .nav-btn.active { color: var(--primary-blue); border-bottom: 2px solid var(--primary-blue); }
-
-        /* --- View Containers --- */
-        .view-container { flex: 1; display: none; overflow-y: auto; padding: 30px; }
-        .view-container.active { display: block; }
-        .flex-view { display: none; flex: 1; }
-        .flex-view.active { display: flex; justify-content: flex-end; }
-
-        /* --- Researcher List (Table View) --- */
-        .dashboard-card { background: white; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .dashboard-header { padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-        .table-container { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: var(--table-header-bg); text-align: left; padding: 12px 16px; font-weight: 600; color: var(--text-light); border-bottom: 1px solid var(--border-color); text-transform: uppercase; font-size: 11px; }
-        td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
-        
-        .action-btn { padding: 6px 14px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; color: white; margin-right: 4px; text-transform: uppercase; }
-        .btn-logs-row { background: var(--btn-info); opacity: 0.8; }
-        .btn-primary { background: var(--primary-blue); color: white; border: none; padding: 10px 24px; border-radius: 24px; font-size: 13px; cursor: pointer; font-weight: 500; }
-        .btn-primary:hover { background: var(--primary-blue-hover); }
-
-        /* --- Researcher Dashboard (Notes View) --- */
-        .main-content-area { flex: 1; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-style: italic; font-size: 14px; background: #f8fafc; }
-        .sidebar { width: 380px; background: white; border-left: 1px solid var(--border-color); padding: 25px; height: 100%; overflow-y: auto; }
-        .section-title { font-size: 12px; text-transform: uppercase; color: var(--text-light); font-weight: 700; margin-bottom: 10px; letter-spacing: 0.5px; }
-        .notes-textarea { width: 100%; height: 140px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 15px; font-size: 14px; margin-bottom: 15px; resize: none; }
-        .btn-outline { background: white; border: 1px solid #cbd5e1; color: var(--text-main); padding: 8px 20px; border-radius: 24px; font-size: 14px; cursor: pointer; float: right; transition: all 0.2s; }
-        .btn-outline:hover:not(:disabled) { background: var(--bg-light); border-color: var(--text-light); }
-        .btn-outline:disabled { background: var(--disabled-gray); color: var(--disabled-text); cursor: not-allowed; border: none; }
-
-        /* --- Modals --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; width: 850px; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); }
-
-        /* Tag Manager Styles */
-        .tag-dash-body { display: flex; height: 550px; }
-        .tag-dash-left { flex: 1; padding: 25px; border-right: 1px solid var(--border-color); background: #fafafa; display: flex; flex-direction: column; }
-        .tag-dash-right { width: 250px; padding: 25px; background: white; }
-        .tags-table-wrapper { flex: 1; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; background: white; margin-top: 15px; }
-        .tag-row-item { display: grid; grid-template-columns: 140px 1fr 120px; padding: 15px; border-bottom: 1px solid #f1f5f9; align-items: start; font-size: 13px; }
-        .tag-row-item:last-child { border-bottom: none; }
-        .tag-row-item:hover { background: #f8fafc; }
-        .client-label { font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px; display: block; }
-        .suggest-pill { display: inline-block; background: #e2e8f0; padding: 4px 10px; border-radius: 12px; font-size: 11px; margin: 2px; cursor: pointer; transition: all 0.2s; }
-        .suggest-pill:hover { background: var(--primary-blue); color: white; }
-        
-        .tag-badge { 
-            background: #eff6ff; 
-            color: var(--primary-blue); 
-            padding: 4px 10px; 
-            border-radius: 6px; 
-            font-size: 11px; 
-            margin: 3px; 
-            display: inline-flex; 
+        /* --- Top Bar --- */
+        .top-navbar {
+            background-color: var(--header-blue);
+            height: 60px;
+            display: flex;
             align-items: center;
-            border: 1px solid #dbeafe; 
+            padding: 0 40px;
+            gap: 40px;
+            color: white;
+            font-size: 14px;
         }
-        .tag-badge-del {
-            margin-left: 8px;
+        .top-navbar a { color: white; text-decoration: none; cursor: pointer; opacity: 0.9; }
+
+        /* --- Page Layout --- */
+        .page-title { padding: 25px 40px 10px 40px; font-size: 24px; font-weight: 500; color: #444; }
+
+        .tabs-container {
+            display: flex;
+            padding: 0 40px;
+            border-bottom: 1px solid var(--border-color);
+            background: white;
+            margin: 0 40px;
+            border-radius: 8px 8px 0 0;
+            margin-top: 10px;
+        }
+        .tab {
+            padding: 15px 25px;
             cursor: pointer;
+            font-size: 13px;
+            color: var(--text-light);
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active { color: var(--vetty-blue); border-bottom: 3px solid var(--vetty-blue); font-weight: 600; }
+
+        .main-card {
+            background: white;
+            margin: 0 40px 20px 40px;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            flex: 1;
+            overflow-y: auto;
+            display: none;
+            padding: 20px;
+        }
+        .main-card.active { display: block; }
+
+        /* --- Canned Notes --- */
+        .canned-notes-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 20px;
+            align-items: flex-end;
+            margin-bottom: 30px;
+        }
+        .filter-group label { display: block; font-size: 12px; font-weight: bold; color: #888; margin-bottom: 8px; }
+        .filter-select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9; color: #666; font-size: 13px; }
+        .button-stack { display: flex; flex-direction: column; gap: 10px; min-width: 180px; }
+        .btn-blue { background: var(--vetty-blue); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; text-align: center; }
+
+        .table-standard { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        .table-standard th { text-align: left; background: #f8f9fa; padding: 12px; color: #777; border-bottom: 2px solid #eee; }
+        .table-standard td { padding: 12px; border-bottom: 1px solid #eee; }
+        .action-link { cursor: pointer; font-size: 12px; font-weight: bold; margin-right: 15px; }
+
+        /* --- Sidebar Dashboard --- */
+        .sidebar-view { display: none; flex: 1; margin-top: 10px; }
+        .sidebar-view.active { display: flex; justify-content: flex-end; }
+        .sidebar-content { flex: 1; padding: 40px; color: #999; font-style: italic; }
+        .sidebar { width: 380px; background: white; border-left: 1px solid var(--border-color); padding: 25px; height: 100%; overflow-y: auto; }
+        .sidebar-title { font-size: 12px; font-weight: bold; color: #888; margin-bottom: 10px; text-transform: uppercase; }
+        .sidebar-textarea { width: 100%; height: 150px; border: 1px solid #ccc; border-radius: 8px; padding: 15px; font-size: 14px; margin-bottom: 15px; resize: none; }
+        .btn-send-to { background: white; border: 1px solid #ccc; color: #555; padding: 8px 22px; border-radius: 20px; font-size: 13px; float: right; cursor: pointer; }
+        .btn-send-to:disabled { background: #eee; color: #aaa; border-color: #eee; cursor: not-allowed; }
+
+        /* --- Workflow Modal (Recipient Selection) --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; width: 620px; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        .search-area { padding: 20px; }
+        .search-bar-rounded {
+            width: 100%;
+            background: var(--search-bg);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-style: italic;
+            color: #444;
+            outline: none;
+        }
+
+        .modal-body { padding: 0 20px 20px 20px; display: flex; gap: 20px; height: 320px; }
+        .user-list-wrapper { flex: 1; border: 1px solid #d1d5db; border-radius: 8px; overflow-y: auto; padding: 5px; }
+        
+        .user-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .user-row.selected { border-color: #e5e7eb; background: #f9fafb; }
+
+        .circle-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            flex-shrink: 0;
+        }
+        .user-row.selected .circle-icon {
+            background: var(--success-green);
+            border-color: var(--success-green);
+        }
+        .user-row.selected .circle-icon::after {
+            content: '✓';
+            color: white;
             font-weight: bold;
-            color: var(--danger-red);
+            font-size: 14px;
+        }
+        .user-row:not(.selected) .circle-icon::after {
+            content: '✓';
+            color: #ccc;
+            font-weight: bold;
             font-size: 14px;
         }
 
-        /* Workflow Modal UI */
-        .search-bar-box { padding: 20px; background: #f8fafc; border-bottom: 1px solid #eee; }
-        .search-input-mock { width: 100%; background: #ccd2d9; border: none; padding: 12px 24px; border-radius: 24px; font-size: 15px; color: var(--text-main); font-style: italic; }
-        
-        .workflow-scroll-area { height: 320px; padding: 20px; display: flex; gap: 20px; }
-        .user-list-box { flex: 1; border: 1px solid #eee; border-radius: 12px; overflow-y: auto; padding: 10px; }
-        .user-item-wf { display: flex; align-items: center; padding: 12px 16px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; }
-        .user-item-wf.selected { border-color: var(--success-green); background: #f0fdf4; box-shadow: 0 0 0 1px var(--success-green); }
-        .wf-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #cbd5e1; margin-right: 15px; display: flex; align-items: center; justify-content: center; background: #fff; flex-shrink: 0; }
-        .user-item-wf.selected .wf-check { background: var(--success-green); border-color: var(--success-green); }
-        .user-item-wf.selected .wf-check::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
-        
-        .workflow-footer { padding: 25px; border-top: 1px solid var(--border-color); background: #fff; }
-        .workflow-top-opts { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
-        
-        .wf-tag-selector { position: relative; width: 220px; }
-        .wf-tag-btn { border: 1px solid #cbd5e1; padding: 10px 15px; border-radius: 8px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #fff; }
-        .wf-tag-menu { position: absolute; bottom: 100%; left: 0; width: 100%; background: #fff; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); margin-bottom: 5px; display: none; z-index: 100; max-height: 200px; overflow-y: auto; }
-        .wf-tag-opt { padding: 10px 15px; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f9fafb; }
-        .wf-tag-opt:hover { background: var(--bg-light); color: var(--primary-blue); }
+        .user-name-text { font-size: 14px; color: #4b5563; }
 
-        .subject-broad-field { width: 100%; padding: 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px; margin-bottom: 25px; }
+        .pills-container { width: 160px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+        .pill-item {
+            background: var(--pill-bg);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #1f2937;
+        }
+        .pill-remove { cursor: pointer; font-weight: bold; padding-left: 8px; }
 
-        .pill-wf { display: inline-flex; align-items: center; background: #e2e8f0; padding: 6px 14px; border-radius: 20px; font-size: 12px; margin: 4px; }
-        .pill-wf-del { margin-left: 10px; cursor: pointer; font-weight: bold; }
+        .modal-footer { padding: 25px; border-top: 1px solid #eee; background: #fff; }
+        
+        .email-opt-wrapper { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 25px; }
+        .checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; color: #374151; }
+        .label-select { padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px; }
 
-        .hidden { display: none; }
+        .footer-actions { display: flex; justify-content: space-between; align-items: center; }
+        .btn-close-text { background: none; border: none; cursor: pointer; font-size: 15px; color: #4b5563; }
+        .btn-send-main {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 45px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .info-tip {
+            width: 18px; height: 18px; border-radius: 50%; background: #94a3b8; color: white;
+            display: inline-flex; align-items: center; justify-content: center; font-size: 11px;
+            font-weight: bold; font-style: italic; cursor: help; position: relative; margin-left: 8px;
+        }
+        .info-tip:hover::after {
+            content: "This label will appear only in the email and will not be shown in the activity feed or elsewhere.";
+            position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+            background: #1f2937; color: white; padding: 10px; border-radius: 6px; width: 220px;
+            font-size: 11px; font-style: normal; font-weight: normal; z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- NAVIGATION -->
-    <nav class="app-nav">
-        <button class="nav-btn active" id="btn-list-view" onclick="switchView('list')">Researcher List</button>
-        <button class="nav-btn" id="btn-dash-view" onclick="switchView('dash')">Researcher Dashboard</button>
-    </nav>
-
-    <!-- VIEW 1: Researcher List -->
-    <div id="view-list" class="view-container active">
-        <h1 style="margin-bottom: 25px; font-size: 24px; font-weight: 400;">Researcher Dashboard</h1>
-        <div class="dashboard-card">
-            <div class="dashboard-header">
-                <div style="display: flex; gap: 25px; font-size: 14px;">
-                    <span style="color: var(--primary-blue); font-weight: 600; border-bottom: 2px solid var(--primary-blue); padding-bottom: 8px;">Researcher List</span>
-                    <span style="color: var(--text-light); cursor: pointer;">Researcher Access Control</span>
-                    <span style="color: var(--text-light); cursor: pointer;">Researcher Canned Notes</span>
-                </div>
-                <div style="display: flex; gap: 12px;">
-                    <button class="btn-primary" style="background: #fff; color: var(--primary-blue); border: 1px solid var(--primary-blue);" onclick="openTagManager()">Manage Client Tags</button>
-                    <button class="btn-primary">Add Researcher</button>
-                </div>
-            </div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th style="width: 220px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="researcher-table-body">
-                        <tr><td>1</td><td>Mrunali Lokhande</td><td>mrunali.l@vetty.co</td><td><button class="action-btn btn-logs-row">Logs</button></td></tr>
-                        <tr><td>2</td><td>John Smith</td><td>jsmith@lsi.co</td><td><button class="action-btn btn-logs-row">Logs</button></td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="top-navbar">
+        <a>Dashboard</a>
+        <a>Logout</a>
     </div>
 
-    <!-- VIEW 2: Researcher Dashboard (Notes Sidebar View) -->
-    <div id="view-dash" class="flex-view">
-        <div class="main-content-area">
-            Researcher Activity Feed Content Area
+    <div class="page-title">Researcher Dashboard</div>
+
+    <div class="tabs-container">
+        <div class="tab" onclick="switchTab('access')">Researcher Access Control</div>
+        <div class="tab active" id="tab-canned-link" onclick="switchTab('canned')">Researcher Canned Notes</div>
+        <div class="tab" id="tab-execution-link" onclick="switchTab('execution')">Researcher Dashboard</div>
+    </div>
+
+    <!-- VIEW: Researcher Canned Notes -->
+    <div id="view-canned-notes" class="main-card active">
+        <div class="canned-notes-controls">
+            <div class="filter-group"><label>Checks</label><select class="filter-select"><option>Search checks...</option></select></div>
+            <div class="filter-group"><label>Scenario</label><select class="filter-select"><option>Search scenario...</option></select></div>
+            <div class="filter-group"><label>Comments</label><select class="filter-select"><option>Search comments...</option></select></div>
+            <div class="button-stack">
+                <button class="btn-blue">Add Canned Notes</button>
+                <button class="btn-blue">Refresh</button>
+                <button class="btn-blue" onclick="openLabelMgmt()">ADD Client -VP Label</button>
+            </div>
         </div>
+        <table class="table-standard">
+            <thead><tr><th>#</th><th>Check</th><th>Scenario</th><th>Comment</th></tr></thead>
+            <tbody><tr><td>1</td><td>Employment</td><td>Call Status: Ringing</td><td>Called the company...</td></tr></tbody>
+        </table>
+    </div>
+
+    <!-- VIEW: Execution Sidebar -->
+    <div id="view-execution" class="sidebar-view">
+        <div class="sidebar-content">Profile Activity Feed Content Area...</div>
         <div class="sidebar">
-            <div class="section-title">CLIENT VP NOTES</div>
-            <textarea id="sidebar-notes" class="notes-textarea" placeholder="Enter notes here..."></textarea>
-            <button id="btn-sidebar-send" class="btn-outline" disabled>Send To</button>
+            <div class="sidebar-title">CLIENT VP NOTES</div>
+            <textarea id="notes-input" class="sidebar-textarea" placeholder="Enter notes here..."></textarea>
+            <button id="btn-open-wf" class="btn-send-to" disabled>Send To</button>
+            <div style="margin-top: 80px; border-top: 1px solid #eee; padding-top: 20px;">
+                <div class="sidebar-title">Context</div>
+                <div style="font-size: 13px;"><strong>Candidate:</strong> Vetty Demo</div>
+                <div style="font-size: 13px;"><strong>Order ID:</strong> #VTY-USA-2024</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Label Mgmt -->
+    <div id="modal-lbl-mgmt" class="modal-overlay">
+        <div class="modal-content" style="width: 700px; padding: 30px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px;">
+                <h2 style="font-size: 18px; display: flex; align-items: center;">
+                    Manage Client - VP Labels
+                    <div class="info-tip">i</div>
+                </h2>
+                <button style="background:none; border:none; font-size: 24px; cursor:pointer; color:#ccc;" onclick="closeLabelMgmt()">×</button>
+            </div>
             
-            <div style="margin-top: 80px;">
-                <div class="section-title">Recipient Context</div>
-                <table style="width: 100%; font-size: 13px;">
-                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 10px 0; color: #666;">Candidate</td><td style="font-weight: 500;">Donald Duck</td></tr>
-                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 10px 0; color: #666;">Account</td><td id="context-client">LSI Staffing</td></tr>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <input type="text" id="new-lbl-name" style="flex:1; padding:10px 15px; border:1px solid #ddd; border-radius:6px; outline:none;" placeholder="New Label Name">
+                <button class="btn-blue" style="border-radius:6px;" onclick="saveLabel()">Save Label</button>
+            </div>
+            
+            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px;">
+                <table class="table-standard" style="margin-top: 0;">
+                    <thead><tr><th style="width: 60px;">#</th><th>Label Name</th><th style="text-align: right; width: 150px;">Actions</th></tr></thead>
+                    <tbody id="lbl-table-body"></tbody>
                 </table>
             </div>
+            
+            <div style="margin-top: 25px; text-align: right;">
+                <button class="btn-close-text" style="color: #666;" onclick="closeLabelMgmt()">Close Dashboard</button>
+            </div>
         </div>
     </div>
 
-    <!-- MODAL 1: Researcher Tag Setting Dashboard -->
-    <div id="modal-tags-mgmt" class="modal-overlay">
+    <!-- MODAL: Send To (Recipient Selection) -->
+    <div id="modal-wf" class="modal-overlay">
         <div class="modal-content">
-            <div class="modal-header" style="padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="font-size: 18px; font-weight: 600;">Researcher Tag Setting Dashboard</h2>
-                <button style="background:none; border:none; font-size: 24px; cursor:pointer; color:#ccc;" onclick="closeTagManager()">×</button>
+            <div class="search-area">
+                <input type="text" class="search-bar-rounded" placeholder="Search User">
             </div>
-            <div class="tag-dash-body">
-                <div class="tag-dash-left">
-                    <span class="client-label">Add Multiple Tags (Comma Separated)</span>
-                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <input type="text" id="tag-input-field" class="notes-textarea" style="flex:1; height:45px; margin-bottom:0;" placeholder="e.g. Urgent, Action Needed, FYI">
-                        <button class="btn-primary" onclick="handleTagAddBtn()" style="border-radius:6px; height:45px;">Add</button>
-                    </div>
-                    
-                    <div style="margin-bottom: 15px;">
-                        <span class="client-label">Quick Suggestions (Adds to box above):</span>
-                        <div id="quick-suggestions">
-                            <span class="suggest-pill" onclick="addSuggestedTag('Action Needed')">Action Needed</span>
-                            <span class="suggest-pill" onclick="addSuggestedTag('Urgent')">Urgent</span>
-                            <span class="suggest-pill" onclick="addSuggestedTag('FYI')">FYI</span>
-                            <span class="suggest-pill" onclick="addSuggestedTag('Priority')">Priority</span>
-                        </div>
-                    </div>
-
-                    <div class="tags-table-wrapper" id="tag-db-list">
-                        <!-- Tag rows rendered here -->
-                    </div>
-                </div>
-                <div class="tag-dash-right">
-                    <span class="client-label">Select Company</span>
-                    <select id="company-select" class="notes-textarea" style="width:100%; height:45px; padding:10px;" onchange="renderTagMgmt()">
-                        <option value="LSI Staffing">LSI Staffing</option>
-                        <option value="Malone">Malone</option>
-                        <option value="University of Miami">University of Miami</option>
-                        <option value="Vetty">Vetty</option>
-                    </select>
-                </div>
+            <div class="modal-body">
+                <div class="user-list-wrapper" id="user-list-target"></div>
+                <div class="pills-container" id="pills-target"></div>
             </div>
-            <div class="modal-footer" style="padding: 15px 20px; background: #f8fafc; border-top:1px solid #eee;">
-                <button class="btn-primary" onclick="closeTagManager()" style="float: right;">Close Settings</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL 2: Workflow Modal (Recipient Selection) -->
-    <div id="modal-wf-workflow" class="modal-overlay">
-        <div class="modal-content" style="width: 650px;">
-            <div class="search-bar-box">
-                <input type="text" class="search-input-mock" placeholder="Search User">
-            </div>
-            <div class="workflow-scroll-area">
-                <div id="wf-users-container" class="user-list-box"></div>
-                <div id="wf-pills-container" style="width: 200px; padding-left: 10px;"></div>
-            </div>
-            <div class="workflow-footer">
-                <div class="workflow-top-opts">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #444; white-space: nowrap;">
-                        <input type="checkbox" id="wf-email-checkbox">
+            <div class="modal-footer">
+                <div class="email-opt-wrapper">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="cb-send-email">
                         Send an email also to the selected user(s)
                     </label>
                     
-                    <div id="wf-tag-wrapper" class="wf-tag-selector hidden">
-                        <div class="wf-tag-btn" onclick="toggleWfTagMenu()">
-                            <span id="wf-current-tag">Select Tag</span>
-                            <span style="font-size: 10px;">▼</span>
-                        </div>
-                        <div id="wf-tag-menu" class="wf-tag-menu"></div>
+                    <div id="lbl-select-wrap" class="hidden" style="display: flex; align-items: center;">
+                        <select id="wf-lbl-dropdown" class="label-select" onchange="toggleInfoTip()">
+                            <option value="">Select Label (optional)</option>
+                        </select>
+                        <div id="wf-info-tip" class="info-tip hidden">i</div>
                     </div>
                 </div>
-                
-                <div id="wf-subject-wrapper" class="hidden">
-                    <input type="text" id="wf-custom-subject" class="subject-broad-field" placeholder="Custom Subject Line (Optional)">
-                </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <button class="btn-text" style="background:none; border:none; cursor:pointer; color:#666; font-size: 15px;" onclick="closeWfModal()">Close</button>
-                    <button class="btn-primary" onclick="handleWorkflowSend()" style="padding: 12px 35px; border-radius: 24px;">Send</button>
+                <div class="footer-actions">
+                    <button class="btn-close-text" onclick="closeWf()">Close</button>
+                    <button class="btn-send-main" onclick="handleFinalSend()">Send</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- SCREEN 3: Email Preview -->
-    <div id="email-preview-container" class="view-container" style="background:#f1f3f4; padding: 40px; display:none; flex-direction:column; align-items:center;">
-        <h2 style="margin-bottom:30px; text-align:center; color:#333;">Dispatch Preview</h2>
-        <div id="preview-list" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
-        <button class="btn-primary" onclick="location.reload()" style="margin-top: 30px;">Return to Dashboard</button>
+    <!-- VIEW: Final Dispatch -->
+    <div id="view-dispatch" class="view-container" style="display:none; flex-direction:column; align-items:center; background:#f0f2f5; padding:40px; overflow-y:auto; flex:1;">
+        <h2 style="margin-bottom:30px;">Dispatch Preview</h2>
+        <div id="dispatch-list" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
+        <button class="btn-blue" onclick="location.reload()" style="margin-top:20px; padding: 12px 40px; border-radius:30px;">Return to Dashboard</button>
     </div>
 
     <script>
-        // --- DATA ---
-        let tagDatabase = {
-            'LSI Staffing': ['Verification Required', 'Action Needed'],
-            'Malone': ['Malone Review'],
-            'Vetty': ['Internal Only', 'Final Review']
-        };
-
-        const usersList = [
-            { id: 1, name: 'John Smith', email: 'jsmith@lsi.co', client: 'LSI Staffing' },
-            { id: 2, name: 'Sarah Jenkins', email: 'sjenkins@vetty.co', client: 'Vetty' },
-            { id: 3, name: 'Michael Brown', email: 'mbrown@malone.co', client: 'Malone' },
-            { id: 4, name: 'Emily Davis', email: 'edavis@miami.edu', client: 'University of Miami' }
+        // --- STATE ---
+        let labels = [
+            { id: 1, name: 'Action Needed' },
+            { id: 2, name: 'Verification Required' }
         ];
 
-        let selectedUids = new Set();
-        let selectedWfTag = '';
+        const users = [
+            { id: 1, name: 'Vetty Demo', email: 'demo@vetty.co' },
+            { id: 2, name: 'Wolf Sandbox_user_1', email: 'user1@wolf.co' },
+            { id: 3, name: 'Wolf Sandbox_user_2', email: 'user2@wolf.co' },
+            { id: 4, name: 'Wolf Sandbox_user_3', email: 'user3@wolf.co' }
+        ];
+
+        let selectedIds = new Set();
+        let activeLabel = "";
 
         // --- NAVIGATION ---
-        function switchView(view) {
-            document.getElementById('btn-list-view').classList.toggle('active', view === 'list');
-            document.getElementById('btn-dash-view').classList.toggle('active', view === 'dash');
-            document.getElementById('view-list').classList.toggle('active', view === 'list');
-            document.getElementById('view-dash').classList.toggle('active', view === 'dash');
-            document.getElementById('email-preview-container').style.display = 'none';
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.main-card, .sidebar-view').forEach(v => v.classList.remove('active'));
+            if (tab === 'canned') {
+                document.getElementById('view-canned-notes').classList.add('active');
+                document.getElementById('tab-canned-link').classList.add('active');
+            } else if (tab === 'execution') {
+                document.getElementById('view-execution').classList.add('active');
+                document.getElementById('tab-execution-link').classList.add('active');
+            }
         }
 
-        // --- TAG MANAGER LOGIC ---
-        function openTagManager() {
-            document.getElementById('modal-tags-mgmt').style.display = 'flex';
-            renderTagMgmt();
+        // --- LABELS MGMT ---
+        function openLabelMgmt() { document.getElementById('modal-lbl-mgmt').style.display = 'flex'; renderLblTable(); }
+        function closeLabelMgmt() { document.getElementById('modal-lbl-mgmt').style.display = 'none'; }
+        
+        function renderLblTable() {
+            const body = document.getElementById('lbl-table-body');
+            body.innerHTML = '';
+            labels.forEach((l, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${idx+1}</td>
+                    <td>${l.name}</td>
+                    <td style="text-align:right;">
+                        <span class="action-link" style="color:blue" onclick="renameLbl(${l.id})">Edit</span>
+                        <span class="action-link" style="color:red" onclick="delLbl(${l.id})">Delete</span>
+                    </td>`;
+                body.appendChild(tr);
+            });
+        }
+        
+        function saveLabel() {
+            const input = document.getElementById('new-lbl-name');
+            if (input.value.trim()) {
+                labels.push({ id: Date.now(), name: input.value.trim() });
+                renderLblTable();
+                input.value = '';
+            }
+        }
+        
+        function delLbl(id) {
+            if(confirm("Remove this label?")) {
+                labels = labels.filter(l => l.id !== id);
+                renderLblTable();
+            }
+        }
+        
+        function renameLbl(id) {
+            const l = labels.find(x => x.id === id);
+            const n = prompt("New label name:", l.name);
+            if (n && n.trim()) {
+                l.name = n.trim();
+                renderLblTable();
+            }
         }
 
-        function closeTagManager() { document.getElementById('modal-tags-mgmt').style.display = 'none'; }
-
-        function renderTagMgmt() {
-            const container = document.getElementById('tag-db-list');
-            container.innerHTML = '';
+        // --- WORKFLOW MODAL ---
+        function initWorkflow() {
+            const notes = document.getElementById('notes-input');
+            const btn = document.getElementById('btn-open-wf');
+            notes.addEventListener('input', () => btn.disabled = notes.value.trim().length === 0);
             
-            Object.keys(tagDatabase).forEach(client => {
-                const tags = tagDatabase[client];
-                const row = document.createElement('div');
-                row.className = 'tag-row-item';
-                
-                const tagBadges = tags.length > 0 
-                    ? tags.map(t => `
-                        <span class="tag-badge">
-                            ${t}
-                            <span class="tag-badge-del" onclick="removeTagSpecific('${client}', '${t}')" title="Remove tag">×</span>
-                        </span>
-                    `).join('') 
-                    : '<span style="color:#999; font-style:italic;">No tags</span>';
+            btn.onclick = () => {
+                document.getElementById('modal-wf').style.display = 'flex';
+                renderWfUsers();
+                populateDropdown();
+            };
+            
+            document.getElementById('cb-send-email').onchange = e => {
+                const wrap = document.getElementById('lbl-select-wrap');
+                if (e.target.checked) {
+                    wrap.classList.remove('hidden');
+                } else {
+                    wrap.classList.add('hidden');
+                    document.getElementById('wf-lbl-dropdown').value = "";
+                    document.getElementById('wf-info-tip').classList.add('hidden');
+                }
+            };
+        }
 
-                row.innerHTML = `
-                    <div style="font-weight:600; color:var(--primary-blue);">${client}</div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">${tagBadges}</div>
-                    <div style="display:flex; gap:15px; justify-content:flex-end; align-items:center;">
-                        <span style="color:var(--danger-red); cursor:pointer; font-weight:500;" onclick="clearCompanyEntry('${client}')">Delete All</span>
-                    </div>
-                `;
+        function renderWfUsers() {
+            const container = document.getElementById('user-list-target');
+            container.innerHTML = '';
+            users.forEach(u => {
+                const row = document.createElement('div');
+                row.className = `user-row ${selectedIds.has(u.id) ? 'selected' : ''}`;
+                row.innerHTML = `<div class="circle-icon"></div><span class="user-name-text">${u.name}</span>`;
+                row.onclick = () => {
+                    if (selectedIds.has(u.id)) selectedIds.delete(u.id);
+                    else selectedIds.add(u.id);
+                    renderWfUsers();
+                    renderPills();
+                };
                 container.appendChild(row);
             });
         }
 
-        function removeTagSpecific(client, tagValue) {
-            if (tagDatabase[client]) {
-                tagDatabase[client] = tagDatabase[client].filter(t => t !== tagValue);
-                renderTagMgmt();
+        function renderPills() {
+            const container = document.getElementById('pills-target');
+            container.innerHTML = '';
+            selectedIds.forEach(id => {
+                const u = users.find(x => x.id === id);
+                const p = document.createElement('div');
+                p.className = 'pill-item';
+                p.innerHTML = `${u.name}<span class="pill-remove" onclick="unselectUser(${u.id})">×</span>`;
+                container.appendChild(p);
+            });
+        }
+
+        function unselectUser(id) { selectedIds.delete(id); renderWfUsers(); renderPills(); }
+
+        function populateDropdown() {
+            const s = document.getElementById('wf-lbl-dropdown');
+            s.innerHTML = '<option value="">Select Label (optional)</option>';
+            labels.forEach(l => {
+                const o = document.createElement('option');
+                o.value = l.name;
+                o.innerText = l.name;
+                s.appendChild(o);
+            });
+        }
+
+        function toggleInfoTip() {
+            const val = document.getElementById('wf-lbl-dropdown').value;
+            activeLabel = val;
+            document.getElementById('wf-info-tip').classList.toggle('hidden', val === "");
+        }
+
+        function closeWf() { document.getElementById('modal-wf').style.display = 'none'; }
+
+        function handleFinalSend() {
+            if (selectedIds.size === 0) return alert("Select at least one recipient");
+            if (document.getElementById('cb-send-email').checked) {
+                document.getElementById('modal-wf').style.display = 'none';
+                document.getElementById('view-execution').classList.remove('active');
+                document.getElementById('view-dispatch').style.display = 'flex';
+                renderDispatch();
+            } else {
+                alert("Notes saved successfully");
+                closeWf();
             }
         }
 
-        function handleTagAddBtn() {
-            const val = document.getElementById('tag-input-field').value.trim();
-            const client = document.getElementById('company-select').value;
-            if (val) {
-                const parts = val.split(',').map(s => s.trim()).filter(s => s !== "");
-                // Re-initialize key if it was deleted
-                if (!tagDatabase[client]) tagDatabase[client] = [];
+        function renderDispatch() {
+            const container = document.getElementById('dispatch-list');
+            const noteVal = document.getElementById('notes-input').value;
+            container.innerHTML = '';
+            selectedIds.forEach(id => {
+                const u = users.find(x => x.id === id);
+                let subject = `Note regarding Vetty Demo, #VTY-USA-2024`;
+                if (activeLabel) subject = `[${activeLabel.toUpperCase()}] ${subject}`;
                 
-                parts.forEach(p => {
-                    if (!tagDatabase[client].includes(p)) {
-                        tagDatabase[client].push(p);
-                    }
-                });
-                document.getElementById('tag-input-field').value = '';
-                renderTagMgmt();
-            }
-        }
-
-        function addSuggestedTag(tagName) {
-            const input = document.getElementById('tag-input-field');
-            let currentVal = input.value.trim();
-            if (currentVal === "") {
-                input.value = tagName;
-            } else {
-                const currentTags = currentVal.split(',').map(s => s.trim());
-                if (!currentTags.includes(tagName)) {
-                    input.value = currentVal + ", " + tagName;
-                }
-            }
-        }
-
-        // Updated function to correctly remove the entire entry
-        function clearCompanyEntry(client) {
-            if (confirm(`Are you sure you want to remove the entry for ${client}?`)) {
-                delete tagDatabase[client];
-                renderTagMgmt();
-            }
-        }
-
-        // --- SIDEBAR LOGIC ---
-        function initSidebar() {
-            const notes = document.getElementById('sidebar-notes');
-            const sendBtn = document.getElementById('btn-sidebar-send');
-            
-            notes.addEventListener('input', () => {
-                sendBtn.disabled = notes.value.trim().length === 0;
-            });
-
-            sendBtn.onclick = () => {
-                document.getElementById('modal-wf-workflow').style.display = 'flex';
-                renderWfUsers();
-            };
-        }
-
-        // --- WORKFLOW MODAL LOGIC ---
-        function renderWfUsers() {
-            const container = document.getElementById('wf-users-container');
-            container.innerHTML = '';
-            usersList.forEach(u => {
-                const div = document.createElement('div');
-                div.className = `user-item-wf ${selectedUids.has(u.id) ? 'selected' : ''}`;
-                div.innerHTML = `<div class="wf-check"></div><span style="font-size:14px; color:#4b5563; font-weight:500;">${u.name}</span>`;
-                div.onclick = () => {
-                    if (selectedUids.has(u.id)) selectedUids.delete(u.id);
-                    else selectedUids.add(u.id);
-                    renderWfUsers();
-                    renderWfPills();
-                    renderWfTags();
-                };
-                container.appendChild(div);
-            });
-        }
-
-        function renderWfPills() {
-            const container = document.getElementById('wf-pills-container');
-            container.innerHTML = '';
-            selectedUids.forEach(id => {
-                const u = usersList.find(x => x.id === id);
-                const pill = document.createElement('div');
-                pill.className = 'pill-wf';
-                pill.innerHTML = `${u.name} <span class="pill-wf-del" onclick="wfUnselect(${u.id})">×</span>`;
-                container.appendChild(pill);
-            });
-        }
-
-        function wfUnselect(id) { selectedUids.delete(id); renderWfUsers(); renderWfPills(); renderWfTags(); }
-
-        function renderWfTags() {
-            const menu = document.getElementById('wf-tag-menu');
-            menu.innerHTML = `<div class="wf-tag-opt" style="color:#94a3b8" onclick="selectWfTag('')">No Tag</div>`;
-            
-            let activeClients = new Set();
-            selectedUids.forEach(id => activeClients.add(usersList.find(x => x.id === id).client));
-
-            let uniqueTags = new Set();
-            activeClients.forEach(client => {
-                (tagDatabase[client] || []).forEach(t => uniqueTags.add(t));
-            });
-
-            uniqueTags.forEach(t => {
-                const div = document.createElement('div');
-                div.className = 'wf-tag-opt';
-                div.innerText = t;
-                div.onclick = () => selectWfTag(t);
-                menu.appendChild(div);
-            });
-        }
-
-        function toggleWfTagMenu() {
-            const m = document.getElementById('wf-tag-menu');
-            m.style.display = m.style.display === 'block' ? 'none' : 'block';
-        }
-
-        function selectWfTag(t) {
-            selectedWfTag = t;
-            document.getElementById('wf-current-tag').innerText = t || 'Select Tag';
-            document.getElementById('wf-tag-menu').style.display = 'none';
-        }
-
-        function closeWfModal() { document.getElementById('modal-wf-workflow').style.display = 'none'; }
-
-        document.getElementById('wf-email-checkbox').onchange = (e) => {
-            const active = e.target.checked;
-            document.getElementById('wf-tag-wrapper').classList.toggle('hidden', !active);
-            document.getElementById('wf-subject-wrapper').classList.toggle('hidden', !active);
-            if (active) renderWfTags();
-        };
-
-        function handleWorkflowSend() {
-            if (selectedUids.size === 0) return alert("Please select at least one recipient.");
-            if (document.getElementById('wf-email-checkbox').checked) {
-                renderFinalPreviews();
-                document.getElementById('modal-wf-workflow').style.display = 'none';
-                document.getElementById('view-dash').classList.remove('active');
-                document.getElementById('email-preview-container').style.display = 'flex';
-            } else {
-                alert("Internal notes saved successfully.");
-                closeWfModal();
-            }
-        }
-
-        function renderFinalPreviews() {
-            const wrapper = document.getElementById('preview-list');
-            const notes = document.getElementById('sidebar-notes').value;
-            const sub = document.getElementById('wf-custom-subject').value.trim();
-            wrapper.innerHTML = '';
-
-            selectedUids.forEach(id => {
-                const u = usersList.find(x => x.id === id);
-                let finalSub = sub || 'Note regarding Donald Duck';
-                if (selectedWfTag) finalSub = `[${selectedWfTag.toUpperCase()}] ${finalSub}`;
-
-                wrapper.innerHTML += `
-                    <div style="background:white; width:100%; max-width:850px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.08); margin-bottom:40px; overflow:hidden; font-family: Arial, sans-serif;">
-                        <div style="padding:25px 35px; border-bottom:1px solid #f0f0f0;">
-                            <div style="font-size:20px; color:#202124; margin-bottom:10px;"><strong>${finalSub}</strong></div>
-                            <div style="font-size:13px; color:#5f6368;">To: ${u.email} <span style="background:#f1f3f4; padding:2px 8px; border-radius:4px; margin-left:15px;">Inbox x</span></div>
+                container.innerHTML += `
+                    <div style="background:white; width:100%; max-width:800px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.05); margin-bottom:30px; border: 1px solid #eee; overflow:hidden;">
+                        <div style="padding:25px; border-bottom:1px solid #f0f0f0;">
+                            <div style="font-size:18px; margin-bottom:5px;"><strong>${subject}</strong></div>
+                            <div style="font-size:12px; color:#666">To: ${u.email}</div>
                         </div>
-                        <div style="padding:50px 70px;">
-                            <div style="font-size:36px; font-weight:bold; margin-bottom:45px;"><span style="color:#60a5fa;">v</span>etty</div>
-                            <p style="color:#5f6368; font-size:16px; margin-bottom:25px;">Hi ${u.name},</p>
-                            <div style="color:#202124; font-size:17px; line-height:1.6; white-space:pre-wrap; margin-bottom:45px;">${notes}</div>
-                            <p style="font-size:16px; color:#202124; margin-bottom:10px;">Log in here :</p>
-                            <p style="margin-bottom:70px;"><a href="#" style="color:#1a73e8; text-decoration:underline;">https://client.vetty.co</a></p>
-                            <div style="border-top:1px solid #eee; padding-top:25px; font-size:15px; color:#5f6368; text-align: left;">
-                                Questions? Drop us a line at <a href="mailto:support@vetty.co" style="color:#1a73e8; text-decoration:none;">support@vetty.co</a>.
-                                <div style="font-size:20px; font-weight:bold; margin-top:35px; display:flex; justify-content:center; color:#202124;"><span style="color:#60a5fa;">v</span>etty</div>
+                        <div style="padding:40px;">
+                            <div style="font-size:32px; font-weight:bold; margin-bottom:30px; color:#1e88e5;">vetty</div>
+                            <p>Hi ${u.name},</p><br>
+                            <div style="white-space:pre-wrap; color:#333; font-size:16px; line-height:1.6;">${noteVal}</div>
+                            <br><br>
+                            <div style="font-size:14px; color:#555; padding: 15px; background: #f9fafb; border-radius: 8px;">
+                                <strong>Candidate Context:</strong><br>
+                                Name: Vetty Demo<br>
+                                Order ID: #VTY-USA-2024
                             </div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             });
         }
 
-        window.onclick = function(e) {
-            if (!e.target.closest('.wf-tag-selector')) {
-                const menu = document.getElementById('wf-tag-menu');
-                if (menu) menu.style.display = 'none';
-            }
-        };
-
-        initSidebar();
+        initWorkflow();
     </script>
 </body>
 </html>
